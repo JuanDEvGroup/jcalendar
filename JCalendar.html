@@ -1,0 +1,1013 @@
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juan Calendar</title>
+<style>
+  :root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --background-color: #ecf0f1;
+    --text-color: #34495e;
+    --event-color: #e74c3c;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --weekday-color: #95a5a6;
+  }
+
+  body {
+    font-family: 'Roboto', Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+  }
+
+  header .logo {
+    margin-right: 10px;
+  }
+
+  .header-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header h1 {
+    font-size: 2em;
+    margin: 0;
+  }
+
+  .creator {
+    margin: 0;
+    font-size: 0.9em;
+  }
+
+  .calendar-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .month-calendar {
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px var(--shadow-color);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+
+  .month-calendar:hover {
+    transform: translateY(-5px);
+  }
+
+  .month-header {
+    background-color: var(--primary-color);
+    color: white;
+    text-align: center;
+    padding: 15px;
+    font-size: 1.4em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: var(--weekday-color);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    padding: 5px 0;
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+  }
+
+  .calendar-day {
+    background-color: white;
+    aspect-ratio: 1;
+    min-height: 40px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .day-number {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: var(--text-color);
+  }
+
+  .event-container {
+    width: 100%;
+    overflow: hidden;
+    flex-grow: 1;
+  }
+
+  .event {
+    background-color: var(--event-color);
+    color: white;
+    border-radius: 20px;
+    padding: 1px 4px;
+    margin: 2px 0;
+    font-size: 0.6em;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s ease;
+  }
+
+  .event a {
+    color: white;
+    text-decoration: none;
+  }
+
+  .event img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 2px;
+    border-radius: 5px;
+  }
+
+  .event:hover {
+    transform: translateX(2px);
+    box-shadow: -2px 2px 5px var(--shadow-color);
+  }
+
+  .event-delete {
+    margin-left: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .event:hover .event-delete {
+    opacity: 1;
+  }
+
+  .more-events {
+    font-size: 0.75em;
+    color: var(--primary-color);
+    font-weight: bold;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+
+  .modal-content {
+    position: absolute;
+    cursor: move;
+    user-select: none;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+
+  .modal-header {
+    padding: 10px;
+    cursor: move;
+    background-color: var(--primary-color);
+    color: white;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+  }
+
+  #events-list {
+    max-height: calc(80vh - 200px);
+    overflow-y: auto;
+    margin-bottom: 20px;
+    flex-grow: 1;
+  }
+
+  @keyframes modalAppear {
+    from {
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    line-height: 1;
+  }
+
+  .close:hover,
+  .close:focus {
+    color: var(--text-color);
+  }
+
+  h1#year-header {
+    font-size: 2em;
+    margin-top: 0;
+  }
+
+  .year-selector {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .year-selector button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+  }
+
+  .year-selector button:hover {
+    background-color: #2980b9;
+  }
+
+  #current-year {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--primary-color);
+  }
+
+  input[type="text"],
+  input[type="url"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+  }
+
+  input[type="file"] {
+    margin: 10px 0;
+  }
+
+  button {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #27ae60;
+  }
+
+  .empty-day {
+    background-color: var(--background-color);
+  }
+
+  #versionBox {
+    background-color: #ffffff;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+  }
+
+  #versionBox:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  #versionNumber {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+  }
+
+  #loadingSpinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 10px auto;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @media (max-width: 768px) {
+    .calendar-day {
+      min-height: 30px;
+    }
+
+    .day-number {
+      font-size: 12px;
+    }
+
+    .event {
+      font-size: 0.5em;
+    }
+
+    .modal-content {
+      width: 95%;
+      padding: 15px;
+    }
+
+    .modal-content h3 {
+      font-size: 1.2em;
+    }
+
+    input[type="text"],
+    input[type="url"] {
+      font-size: 0.9em;
+    }
+
+    button {
+      font-size: 0.9em;
+    }
+
+    #versionBox {
+      position: static;
+      margin: 20px auto;
+      max-width: 300px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    header h1 {
+      font-size: 1.5em;
+    }
+
+    .creator {
+      font-size: 0.8em;
+    }
+
+    #year-header {
+      font-size: 1.5em;
+    }
+
+    .year-selector button {
+      padding: 8px 12px;
+      font-size: 0.9em;
+    }
+
+    #current-year {
+      font-size: 1.2em;
+    }
+
+    .calendar-day {
+      min-height: 25px;
+    }
+
+    .day-number {
+      font-size: 10px;
+    }
+
+    .event {
+      font-size: 0.4em;
+    }
+  }
+
+  #update-modal .modal-content {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    width: 90%;
+    max-width: 500px;
+  }
+
+  #update-modal h1 {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #ecf0f1;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+
+  .progress {
+    width: 0%;
+    height: 100%;
+    background-color: #3498db;
+    transition: width 0.5s ease-in-out;
+  }
+
+  .status {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #34495e;
+    margin-bottom: 1rem;
+  }
+
+  .details {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    padding: 1rem;
+    font-size: 0.9rem;
+    color: #555;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <svg width="40" height="40" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="18" fill="#3498db" />
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="24" font-weight="bold">J</text>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>JCalendar</h1>
+      <p class="creator">Creado por Juan Andrés</p>
+    </div>
+  </header>
+  <h1 id="year-header">Calendario 2023</h1>
+  <div class="year-selector">
+    <button id="prev-year">&lt;</button>
+    <span id="current-year">2023</span>
+    <button id="next-year">&gt;</button>
+    <button id="export-events">Exportar Eventos</button>
+    <button id="import-events">Importar Eventos</button>
+  </div>
+  <div class="calendar-container" id="calendar-container"></div>
+
+  <input type="file" id="import-file" accept=".jbackup" style="display: none;">
+
+  <div id="event-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="close">&times;</span>
+        <h3>Agregar Evento</h3>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="event-name" placeholder="Nombre del evento">
+        <input type="url" id="event-url" placeholder="URL del evento (opcional)">
+        <input type="file" id="event-image" accept="image/*">
+        <button id="add-event">Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="events-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="close">&times;</span>
+        <h3 id="events-modal-title">Eventos para <span id="selected-date"></span></h3>
+      </div>
+      <div class="modal-body">
+        <div id="events-list"></div>
+        <button id="add-event-btn">Agregar Evento</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="update-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="update-modal-close">&times;</span>
+      <h1>Actualizando JCalendar</h1>
+      <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+      </div>
+      <div class="status" id="status">Iniciando actualización...</div>
+      <div class="details" id="details"></div>
+    </div>
+  </div>
+
+  <div id="versionBox">
+    <h2>Número de Versión</h2>
+    <div id="loadingSpinner"></div>
+    <p id="versionNumber">Cargando...</p>
+  </div>
+
+  <script>
+    function setVersionCookie(version) {
+      document.cookie = `jcalendarVersion=${version}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`;
+    }
+
+    function getVersionCookie() {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'jcalendarVersion') {
+          return value;
+        }
+      }
+      return null;
+    }
+
+    const calendarContainer = document.getElementById('calendar-container');
+    const yearHeader = document.getElementById('year-header');
+    const modal = document.getElementById('event-modal');
+    const eventsModal = document.getElementById('events-modal');
+    const closeBtn = document.getElementsByClassName('close');
+    const addEventBtn = document.getElementById('add-event');
+    const eventNameInput = document.getElementById('event-name');
+    const eventUrlInput = document.getElementById('event-url');
+    const eventImageInput = document.getElementById('event-image');
+    const prevYearBtn = document.getElementById('prev-year');
+    const nextYearBtn = document.getElementById('next-year');
+    const currentYearSpan = document.getElementById('current-year');
+    const updateModal = document.getElementById('update-modal');
+
+    let currentYear = new Date().getFullYear();
+    let selectedDate = null;
+    let events = {};
+
+    const weekdays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+    function generateYearCalendar(year) {
+      yearHeader.textContent = `Calendario ${year}`;
+      currentYearSpan.textContent = year;
+      calendarContainer.innerHTML = '';
+
+      for (let month = 0; month < 12; month++) {
+        const monthCalendar = document.createElement('div');
+        monthCalendar.classList.add('month-calendar');
+        
+        const monthHeader = document.createElement('div');
+        monthHeader.classList.add('month-header');
+        monthHeader.textContent = new Date(year, month).toLocaleString('default', { month: 'long' });
+        monthCalendar.appendChild(monthHeader);
+
+        const weekdaysHeader = document.createElement('div');
+        weekdaysHeader.classList.add('weekdays');
+        weekdays.forEach(day => {
+          const dayElement = document.createElement('div');
+          dayElement.textContent = day;
+          weekdaysHeader.appendChild(dayElement);
+        });
+        monthCalendar.appendChild(weekdaysHeader);
+
+        const calendarGrid = document.createElement('div');
+        calendarGrid.classList.add('calendar-grid');
+        monthCalendar.appendChild(calendarGrid);
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+
+        // Fill in the days
+        for (let i = 0; i < 42; i++) {
+          if (i < firstDay.getDay()) {
+            calendarGrid.appendChild(createDayElement());
+          } else if (i >= firstDay.getDay() && i < firstDay.getDay() + lastDay.getDate()) {
+            const day = i - firstDay.getDay() + 1;
+            calendarGrid.appendChild(createDayElement(day, month));
+          } else {
+            calendarGrid.appendChild(createDayElement());
+          }
+        }
+
+        calendarContainer.appendChild(monthCalendar);
+      }
+
+      renderEvents();
+    }
+
+    function createDayElement(day = '', month = null) {
+      const dayElement = document.createElement('div');
+      dayElement.classList.add('calendar-day');
+      if (day !== '') {
+        dayElement.innerHTML = `<div class="day-number">${day}</div>`;
+        dayElement.addEventListener('click', () => openModal(day, month));
+      } else {
+        dayElement.classList.add('empty-day');
+      }
+      return dayElement;
+    }
+
+    function openModal(day, month) {
+      selectedDate = new Date(currentYear, month, day);
+      const dateKey = selectedDate.toISOString().split('T')[0];
+      const selectedDateSpan = document.getElementById('selected-date');
+      const eventsList = document.getElementById('events-list');
+      
+      selectedDateSpan.textContent = selectedDate.toLocaleDateString();
+      eventsList.innerHTML = '';
+      
+      if (events[dateKey]) {
+        events[dateKey].forEach(event => {
+          if (event && event.name) {
+            const eventElement = document.createElement('div');
+            eventElement.classList.add('event');
+            let eventContent = `<span>${event.name}</span>`;
+            if (event.url) {
+              eventContent = `<a href="${event.url}" target="_blank">${eventContent}</a>`;
+            }
+            if (event.imageData) {
+              eventContent += `<img src="${event.imageData}" alt="${event.name}" style="max-width: 100%; height: auto;">`;
+            }
+            eventElement.innerHTML = eventContent;
+            eventsList.appendChild(eventElement);
+          }
+        });
+      }
+      
+      if (eventsList.children.length === 0) {
+        eventsList.innerHTML = '<p>No hay eventos para este día.</p>';
+      }
+      
+      eventsModal.style.display = 'block';
+      
+      // Reset the modal position
+      const modalContent = eventsModal.querySelector('.modal-content');
+      modalContent.style.transform = 'translate3d(0, 0, 0)';
+    }
+
+    document.getElementById('add-event-btn').addEventListener('click', () => {
+      eventsModal.style.display = 'none';
+      modal.style.display = 'block';
+      
+      // Reset the modal position
+      const modalContent = modal.querySelector('.modal-content');
+      modalContent.style.transform = 'translate3d(0, 0, 0)';
+    });
+
+    for (let i = 0; i < closeBtn.length; i++) {
+      closeBtn[i].onclick = function() {
+        this.closest('.modal').style.display = 'none';
+      };
+    }
+
+    window.onclick = (event) => {
+      if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+      }
+    };
+
+    addEventBtn.onclick = () => {
+      const eventName = eventNameInput.value.trim();
+      const eventUrl = eventUrlInput.value.trim();
+      const eventImageFile = eventImageInput.files[0];
+      
+      if (eventName && selectedDate) {
+        if (eventImageFile) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            addEventToCalendar(eventName, selectedDate, eventUrl, e.target.result);
+          };
+          reader.readAsDataURL(eventImageFile);
+        } else {
+          addEventToCalendar(eventName, selectedDate, eventUrl);
+        }
+        
+        eventNameInput.value = '';
+        eventUrlInput.value = '';
+        eventImageInput.value = '';
+        modal.style.display = 'none';
+        openModal(selectedDate.getDate(), selectedDate.getMonth());
+      }
+    }
+
+    function addEventToCalendar(eventName, date, url = '', imageData = '') {
+      const dateKey = date.toISOString().split('T')[0];
+      if (!events[dateKey]) {
+        events[dateKey] = [];
+      }
+      events[dateKey].push({ name: eventName, url, imageData });
+      saveEventsToCookies();
+      renderEvents();
+    }
+
+    function renderEvents() {
+      const days = document.querySelectorAll('.calendar-day:not(.empty-day)');
+      days.forEach(day => {
+        const dayNumber = day.querySelector('.day-number').textContent;
+        if (dayNumber) {
+          const monthCalendar = day.closest('.month-calendar');
+          const monthIndex = Array.from(calendarContainer.children).indexOf(monthCalendar);
+          const date = new Date(currentYear, monthIndex, parseInt(dayNumber));
+          const dateKey = date.toISOString().split('T')[0];
+          const dayEvents = events[dateKey] || [];
+          
+          // Remove existing events
+          day.querySelectorAll('.event-container').forEach(container => container.remove());
+          
+          // Create event container
+          const eventContainer = document.createElement('div');
+          eventContainer.classList.add('event-container');
+          day.appendChild(eventContainer);
+          
+          // Add new events (limit to 2)
+          const visibleEvents = dayEvents.slice(0, 2);
+          visibleEvents.forEach(event => {
+            const eventElement = document.createElement('div');
+            eventElement.classList.add('event');
+            let eventContent = `<span>${event.name}</span>`;
+            if (event.url) {
+              eventContent = `<a href="${event.url}" target="_blank">${eventContent}</a>`;
+            }
+            if (event.imageData) {
+              eventContent += `<img src="${event.imageData}" alt="${event.name}" style="max-width: 100%; height: auto;">`;
+            }
+            eventElement.innerHTML = `
+              ${eventContent}
+              <span class="event-delete" data-date="${dateKey}" data-event="${event.name}">&times;</span>
+            `;
+            eventContainer.appendChild(eventElement);
+          });
+
+          // Add "more" indicator if there are additional events
+          if (dayEvents.length > 2) {
+            const moreElement = document.createElement('div');
+            moreElement.classList.add('more-events');
+            moreElement.textContent = `+${dayEvents.length - 2} more`;
+            eventContainer.appendChild(moreElement);
+          }
+        }
+      });
+    }
+
+    function deleteEvent(dateKey, eventName) {
+      if (events[dateKey]) {
+        events[dateKey] = events[dateKey].filter(event => event.name !== eventName);
+        if (events[dateKey].length === 0) {
+          delete events[dateKey];
+        }
+        saveEventsToCookies();
+        renderEvents();
+      }
+    }
+
+    calendarContainer.addEventListener('click', (event) => {
+      if (event.target.classList.contains('event-delete')) {
+        const dateKey = event.target.getAttribute('data-date');
+        const eventName = event.target.getAttribute('data-event');
+        deleteEvent(dateKey, eventName);
+      }
+    });
+
+    function saveEventsToCookies() {
+      const eventsJson = JSON.stringify(events);
+      document.cookie = `calendarEvents=${encodeURIComponent(eventsJson)}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`;
+    }
+
+    function loadEventsFromCookies() {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'calendarEvents') {
+          events = JSON.parse(decodeURIComponent(value));
+          break;
+        }
+      }
+    }
+
+    function changeYear(delta) {
+      currentYear += delta;
+      generateYearCalendar(currentYear);
+    }
+
+    function exportEvents() {
+      const eventsJson = JSON.stringify(events);
+      const blob = new Blob([eventsJson], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'calendario.jbackup';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importEvents() {
+      const fileInput = document.getElementById('import-file');
+      fileInput.click();
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const importedEvents = JSON.parse(e.target.result);
+            events = importedEvents;
+            saveEventsToCookies();
+            renderEvents();
+            alert('Eventos importados exitosamente');
+          } catch (error) {
+            alert('Error al importar eventos. Asegúrese de que el archivo es válido.');
+          }
+        };
+        reader.readAsText(file);
+      }
+    }
+
+    prevYearBtn.addEventListener('click', () => changeYear(-1));
+    nextYearBtn.addEventListener('click', () => changeYear(1));
+    document.getElementById('export-events').addEventListener('click', exportEvents);
+    document.getElementById('import-events').addEventListener('click', importEvents);
+    document.getElementById('import-file').addEventListener('change', handleFileSelect);
+
+    loadEventsFromCookies();
+    generateYearCalendar(currentYear);
+
+    eventNameInput.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        addEventBtn.click();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const versionUrl = 'https://juandevgroup.github.io/version-jcalendar.html';
+      const versionElement = document.getElementById('versionNumber');
+      const spinner = document.getElementById('loadingSpinner');
+      const versionBox = document.getElementById('versionBox');
+
+      const storedVersion = getVersionCookie();
+      if (storedVersion) {
+        versionElement.textContent = storedVersion;
+      }
+
+      fetch(versionUrl)
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const versionMeta = doc.querySelector('meta[name="version"]');
+          
+          if (versionMeta) {
+            const fetchedVersion = versionMeta.getAttribute('content');
+            if (!storedVersion) {
+              setVersionCookie(fetchedVersion);
+              versionElement.textContent = fetchedVersion;
+            } else {
+              // Compare versions
+              const storedParts = storedVersion.split('.').map(Number);
+              const fetchedParts = fetchedVersion.split('.').map(Number);
+              
+              let needsUpdate = false;
+              for (let i = 0; i < 3; i++) {
+                if (fetchedParts[i] > storedParts[i]) {
+                  needsUpdate = true;
+                  break;
+                } else if (fetchedParts[i] < storedParts[i]) {
+                  break;
+                }
+              }
+
+              if (needsUpdate) {
+                versionElement.textContent = storedVersion + ' (Actualización disponible)';
+                const updateButton = document.createElement('button');
+                updateButton.textContent = 'Actualizar a ' + fetchedVersion;
+                updateButton.onclick = function() {
+                  updateModal.style.display = 'block';
+                  simulateUpdate(fetchedVersion);
+                };
+                versionBox.appendChild(updateButton);
+              } else {
+                versionElement.textContent = storedVersion + ' (Versión actual)';
+              }
+            }
+          } else {
+            versionElement.textContent = 'Versión no encontrada';
+          }
+        })
+        .catch(error => {
+          console.error('Error al obtener la versión:', error);
+          versionElement.textContent = 'Error al cargar la versión';
+        })
+        .finally(() => {
+          spinner.style.display = 'none';
+        });
+    });
+
+    function simulateUpdate(newVersion) {
+      const progress = document.getElementById('progress');
+      const status = document.getElementById('status');
+      const details = document.getElementById('details');
+      const closeBtn = document.getElementById('update-modal-close');
+
+      // Disable close button
+      closeBtn.style.pointerEvents = 'none';
+      closeBtn.style.opacity = '0.5';
+
+      // Prevent modal from closing
+      updateModal.onclick = null;
+
+      const updateSteps = [
+        { message: "Verificando la versión actual...", duration: 1500 },
+        { message: "Descargando nuevos archivos...", duration: 3000 },
+        { message: "Actualizando base de datos...", duration: 2500 },
+        { message: "Aplicando nuevas características...", duration: 2000 },
+        { message: "Optimizando rendimiento...", duration: 1800 },
+        { message: "Realizando pruebas finales...", duration: 2200 },
+        { message: "¡Actualización completada!", duration: 1000 }
+      ];
+
+      let currentStep = 0;
+
+      function updateProgress() {
+        if (currentStep >= updateSteps.length) return;
+
+        let step = updateSteps[currentStep];
+        status.textContent = step.message;
+        details.innerHTML += `${step.message}<br>`;
+        details.scrollTop = details.scrollHeight;
+
+        let stepProgress = (currentStep + 1) / updateSteps.length * 100;
+        progress.style.width = `${stepProgress}%`;
+
+        currentStep++;
+
+        if (currentStep < updateSteps.length) {
+          setTimeout(updateProgress, step.duration);
+        } else {
+          status.textContent = "¡JCalendar ha sido actualizado con éxito!";
+          setTimeout(() => {
+            setVersionCookie(newVersion);
+            document.getElementById('versionNumber').textContent = newVersion;
+            document.querySelector('#versionBox button').remove();
+
+            // Re-enable close button
+            closeBtn.style.pointerEvents = 'auto';
+            closeBtn.style.opacity = '1';
+
+            // Restore modal closing functionality
+            updateModal.onclick = (event) => {
+              if (event.target === updateModal) {
+                updateModal.style.display = 'none';
+              }
+            };
+
+            alert("La actualización de JCalendar se ha completado. Por favor, reinicie la aplicación para aplicar los cambios.");
+          }, 1000);
+        }
+      }
+
+      // Iniciar la actualización después de un breve retraso
+      setTimeout(updateProgress, 1000);
+    }
+    document.getElementById('update-modal-close').onclick = function() {
+      if (this.style.pointerEvents !== 'none') {
+        updateModal.style.display = 'none';
+      }
+    };
+  </script>
+</body></html>
